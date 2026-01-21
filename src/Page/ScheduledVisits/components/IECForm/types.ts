@@ -110,5 +110,7 @@ export const initialForm: IECForm = {
     tipoTuberculosis: "",
     condicionIngreso: "",
 
+
+
     cuantasPersonasVivenConUsted: "",
 };
