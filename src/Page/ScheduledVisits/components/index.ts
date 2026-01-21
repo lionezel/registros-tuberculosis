@@ -1,1 +1,1 @@
-export * from "./VisitModal"
+export * from "./VisitModal";

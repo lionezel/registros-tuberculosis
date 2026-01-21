@@ -1,125 +1,261 @@
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField,
-    IconButton,
-    Stack,
-  } from "@mui/material";
-  import DeleteIcon from "@mui/icons-material/Delete";
-  import { useEffect, useState } from "react";
-  
-  interface Props {
-    open: boolean;
-    onClose: () => void;
-    onSave: (data: {
-      title: string;
-      description: string;
-      start: string;
-      end: string;
-    }) => void;
-    onDelete?: () => void;
-    initialData?: {
-      title: string;
-      description: string;
-      start: string;
-      end: string;
-    };
-    isEdit?: boolean;
-  }
-  
-  export const VisitModal = ({
-    open,
-    onClose,
-    onSave,
-    onDelete,
-    initialData,
-    isEdit = false,
-  }: Props) => {
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [start, setStart] = useState("");
-    const [end, setEnd] = useState("");
-  
-    useEffect(() => {
-      if (initialData) {
-        setTitle(initialData.title);
-        setDescription(initialData.description);
-        setStart(initialData.start.slice(0, 16));
-        setEnd(initialData.end.slice(0, 16));
-      }
-    }, [initialData]);
-  
-    const handleSave = () => {
-      onSave({
-        title,
-        description,
-        start,
-        end,
-      });
-    };
-  
-    return (
-      <Dialog open={open} onClose={onClose} fullWidth>
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
-          {isEdit ? "Editar reunión" : "Nueva reunión"}
-  
-          {isEdit && (
-            <IconButton color="error" onClick={onDelete}>
-              <DeleteIcon />
-            </IconButton>
-          )}
-        </DialogTitle>
-  
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <TextField
-              label="Título"
-              fullWidth
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-  
-            <TextField
-              label="Descripción"
-              fullWidth
-              multiline
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-  
-            <TextField
-              label="Hora inicio"
-              type="datetime-local"
-              InputLabelProps={{ shrink: true }}
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
-  
-            <TextField
-              label="Hora fin"
-              type="datetime-local"
-              InputLabelProps={{ shrink: true }}
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
-          </Stack>
-        </DialogContent>
-  
-        <DialogActions>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={!title || !start || !end}
-          >
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
+  Drawer,
+  IconButton,
+  Typography,
+  Stack,
+  Button,
+  Divider,
+  Box,
+  TextField,
+  Autocomplete,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import SendIcon from '@mui/icons-material/Send';
+import { useEffect, useState } from "react";
+import { AppUser, useFetchUsers } from "../../../../hook/useFetchUsers";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: any) => void;
+  onDelete?: () => void;
+  onOpenIEC: () => void;     // 🔥 NUEVO BOTÓN IEC
+  initialData?: any;
+  isEdit?: boolean;
+}
+
+export const VisitModal = ({
+  open,
+  onClose,
+  onSave,
+  onDelete,
+  onOpenIEC,
+  initialData,
+  isEdit = false,
+}: Props) => {
+  const { users } = useFetchUsers();
+
+  // Datos básicos
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  // Datos clínicos
+  const [patientName, setPatientName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Usuario asignado
+  const [assignedUser, setAssignedUser] = useState<AppUser | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+      setStart(initialData.start?.slice(0, 16) || "");
+      setEnd(initialData.end?.slice(0, 16) || "");
+
+      setPatientName(initialData.patientName || "");
+      setAddress(initialData.address || "");
+      setPhone(initialData.phone || "");
+      setAssignedUser(initialData.assignedUser || null);
+    }
+  }, [initialData]);
+
+  const handleSave = () => {
+    onSave({
+      title,
+      description,
+      start,
+      end,
+
+      patientName,
+      address,
+      phone,
+
+      assignedUser,
+      assignedUserId: assignedUser?.uid || null,
+    });
   };
-  
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: 420,          // 👈 tamaño tipo Teams
+          borderLeft: "1px solid #ddd",
+        },
+      }}
+    >
+      {/* HEADER */}
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          bgcolor: "#1976d2",
+          color: "white",
+        }}
+      >
+        <Typography fontWeight={600}>
+          {isEdit ? "Editar cita" : "Nueva cita"}
+        </Typography>
+
+        <IconButton onClick={onClose} sx={{ color: "white" }}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      {/* BOTÓN IEC SOLO SI ES EDICIÓN */}
+      {isEdit && (
+        <Stack direction="row" spacing={2} p={2}>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<SendIcon />}
+            sx={{ bgcolor: "#1976d2" }}
+            onClick={onOpenIEC}   // 🔥 ABRE FORMATO IEC
+          >
+            Llenar formato IEC
+          </Button>
+        </Stack>
+      )}
+
+      <Divider />
+
+      {/* FORMULARIO */}
+      <Box sx={{ p: 2, overflowY: "auto", height: "100%" }}>
+        <Stack spacing={2}>
+
+          {/* DATOS DEL PACIENTE */}
+          <Typography fontWeight={600}>🧑 Paciente</Typography>
+
+          <TextField
+            size="small"
+            label="Nombre del paciente"
+            fullWidth
+            value={patientName}
+            onChange={(e) => setPatientName(e.target.value)}
+            required
+          />
+
+          <TextField
+            size="small"
+            label="Dirección"
+            fullWidth
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+
+          <TextField
+            size="small"
+            label="Número de contacto"
+            fullWidth
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+
+          <Divider />
+
+          {/* ASIGNACIÓN */}
+          <Typography fontWeight={600}>👨‍⚕️ Asignado a</Typography>
+
+          <Autocomplete
+            options={users}
+            getOptionLabel={(option) =>
+              `${option.displayName} (${option.email})`
+            }
+            value={assignedUser}
+            onChange={(_, value) => setAssignedUser(value)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Seleccionar usuario"
+                placeholder="Buscar por nombre o correo"
+              />
+            )}
+          />
+
+          {assignedUser && (
+            <Typography fontSize={13} color="gray">
+              Tel: {assignedUser.phone || "No registrado"}
+            </Typography>
+          )}
+
+          <Divider />
+
+          {/* DATOS DE LA CITA */}
+          <Typography fontWeight={600}>📅 Datos de la cita</Typography>
+
+          <TextField
+            size="small"
+            label="Título"
+            fullWidth
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <TextField
+            size="small"
+            label="Descripción"
+            fullWidth
+            multiline
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <TextField
+            size="small"
+            label="Hora inicio"
+            type="datetime-local"
+            InputLabelProps={{ shrink: true }}
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            required
+          />
+
+          <TextField
+            size="small"
+            label="Hora fin"
+            type="datetime-local"
+            InputLabelProps={{ shrink: true }}
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            required
+          />
+
+          <Divider />
+
+          {/* ACCIONES */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            {isEdit && (
+              <IconButton color="error" onClick={onDelete}>
+                <DeleteIcon />
+              </IconButton>
+            )}
+
+            <Stack direction="row" spacing={1}>
+              <Button onClick={onClose}>Cancelar</Button>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                disabled={!patientName || !start || !end}
+              >
+                Guardar cita
+              </Button>
+            </Stack>
+          </Stack>
+        </Stack>
+      </Box>
+    </Drawer>
+  );
+};

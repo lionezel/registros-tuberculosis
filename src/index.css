@@ -25,18 +25,18 @@ code {
 
 /* Botones */
 .fc-button {
-  background-color: #6264a7 !important;
+  background-color: #1976d2 !important;
   border: none !important;
   border-radius: 6px !important;
 }
 
 .fc-button:hover {
-  background-color: #464775 !important;
+  background-color: #1976d2 !important;
 }
 
 /* Eventos */
 .fc-event {
-  background-color: #6264a7;
+  background-color: #1976d2;
   border: none;
   border-radius: 6px;
   padding: 2px;
