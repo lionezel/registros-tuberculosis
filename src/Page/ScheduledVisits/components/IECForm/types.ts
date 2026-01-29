@@ -52,7 +52,22 @@ export interface IECForm {
     tipoTuberculosis: string;
     condicionIngreso: string;
 
+    cultivo: string;
+    pruebaMolecular: string;
+    resistente: string;
+    tipoCaso: string;
+    fechaDiagnostico: string;
+    situacionFirma: string;
+    fechaFirma: string;
+    nombreFirma: string;
+    nombrePersonalAcompanante: string;
+
+    firmaPersonalApoyo: string;
+    firmaPersonalRealiza: string;
+
     cuantasPersonasVivenConUsted: string;
+    georreferenciacion: string;
+    fotoEvidencia: string;
 }
 
 export const initialForm: IECForm = {
@@ -61,7 +76,7 @@ export const initialForm: IECForm = {
     telefono: "",
 
 
-    tipoId: "",
+    tipoId: "CC",
     numeroId: "",
 
 
@@ -81,17 +96,17 @@ export const initialForm: IECForm = {
 
 
     ocupacion: "",
-    etnia: "",
-    escolaridad: "",
-    estadoCivil: "",
-    areaGeografica: "",
+    etnia: "N/A",
+    escolaridad: "Bachillerato",
+    estadoCivil: "Soltero",
+    areaGeografica: "ZonaUrbana",
     tipoVivienda: "",
 
 
     personasViven: "",
     calidadVivienda: "",
     personasDependen: "",
-    tipoTrabajo: "",
+    tipoTrabajo: "Empleado",
     serviciosVivienda: [],
 
 
@@ -104,13 +119,26 @@ export const initialForm: IECForm = {
     nombreEAPB: "EPS SURAMERICANA S.A",
 
 
-    grupoPoblacional: "",
+    grupoPoblacional: "Ninguno",
 
 
     tipoTuberculosis: "",
     condicionIngreso: "",
 
+    cultivo: "",
+    pruebaMolecular: "",
+    resistente: "",
+    tipoCaso: "",
+    fechaDiagnostico: "",
+    situacionFirma: "",
+    fechaFirma: "",
+    nombreFirma: "",
+    nombrePersonalAcompanante: "",
 
+    firmaPersonalApoyo: "",
+    firmaPersonalRealiza: "",
 
     cuantasPersonasVivenConUsted: "",
+    georreferenciacion: "",
+    fotoEvidencia: "",
 };

@@ -11,6 +11,8 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { Navbar } from "../../shared";
@@ -20,10 +22,15 @@ import {
   useTheme,
   useMediaQuery,
   Box,
+  GlobalStyles,
 } from "@mui/material";
-import { db } from "../../firebase/cofing";
+
+
 import { VisitModal } from "./components";
 import { IECFormDrawer } from "./components/IECForm/IECFormDrawer";
+import { useUserRole } from "../../hook/useUserRole";
+import { auth, db } from "../../firebase/cofing";
+
 
 export const ScheduledVisits = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -38,13 +45,25 @@ export const ScheduledVisits = () => {
     severity: "success" as "success" | "error",
   });
 
-  /* 🔥 RESPONSIVE */
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  /* 🔥 Firestore realtime */
+  const role = useUserRole();
+  const currentUser = auth.currentUser;
+
+  /* 🔥 Firestore realtime con filtro por rol */
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "scheduledVisits"), (snap) => {
+    if (!role || !currentUser) return;
+
+    const q =
+      role === "admin"
+        ? collection(db, "scheduledVisits")
+        : query(
+          collection(db, "scheduledVisits"),
+          where("assignedUserId", "==", currentUser.uid)
+        );
+
+    const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map((d) => {
         const ev = d.data();
 
@@ -54,12 +73,10 @@ export const ScheduledVisits = () => {
           start: ev.start,
           end: ev.end,
 
-          /* 🔵 COLOR AZUL */
           backgroundColor: "#1976d2",
           borderColor: "#1565c0",
           textColor: "#ffffff",
 
-          /* 🔥 PROPS EXTENDIDAS */
           extendedProps: {
             description: ev.description,
             patientName: ev.patientName,
@@ -77,7 +94,7 @@ export const ScheduledVisits = () => {
     });
 
     return () => unsub();
-  }, []);
+  }, [role, currentUser]);
 
   /* ➕ Crear */
   const handleCreate = async (data: any) => {
@@ -143,6 +160,24 @@ export const ScheduledVisits = () => {
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       <Navbar />
 
+      {/* 🔥 ESTILOS GLOBALES PARA ALTURA DE EVENTOS */}
+      <GlobalStyles
+        styles={{
+          ".fc-timegrid-event .fc-event-main": {
+            padding: "4px 6px",
+            overflow: "hidden",
+          },
+          ".fc-timegrid-event": {
+            minHeight: "60px",
+          },
+          "@media (max-width: 900px)": {
+            ".fc-timegrid-event": {
+              minHeight: "70px",
+            },
+          },
+        }}
+      />
+
       {/* CONTENEDOR RESPONSIVE */}
       <Box sx={{ flex: 1, p: 2 }}>
         <FullCalendar
@@ -150,9 +185,100 @@ export const ScheduledVisits = () => {
           initialView={isMobile ? "timeGridDay" : "timeGridWeek"}
           height="100%"
           events={events}
-          selectable
-          editable
+
+          selectable={role === "admin"}
+          editable={role === "admin"}
           nowIndicator
+
+          /* 🔥 ESPACIO VERTICAL */
+          slotDuration="00:30:00"
+          // altura mínima de cada bloque de 30 min
+          eventMinHeight={60}   // altura mínima de cada evento
+
+          /* 🔥 RENDER PERSONALIZADO DEL EVENTO */
+          eventContent={(arg) => {
+            const { title } = arg.event;
+            const { patientName, address } = arg.event.extendedProps as any;
+
+            const start = arg.event.start;
+            const time = start
+              ? start.toLocaleTimeString("es-CO", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+              : "";
+
+            const baseStyle: React.CSSProperties = {
+              lineHeight: 1.2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            };
+
+            if (isMobile) {
+              // 📱 MÓVIL (compacto pero con dirección)
+              return (
+                <div
+                  style={{
+                    ...baseStyle,
+                    fontSize: 11,
+                    whiteSpace: "normal",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {time} - {title}
+                  </div>
+
+                  <div
+                    style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    👤 {patientName}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 10,
+                      opacity: 0.85,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={address}
+                  >
+                    📍 {address}
+                  </div>
+                </div>
+              );
+            }
+
+            // 🖥️ DESKTOP (completo)
+            return (
+              <div
+                style={{
+                  ...baseStyle,
+                  fontSize: 12,
+                }}
+              >
+                <div style={{ fontWeight: 600 }}>
+                  {time} - {title}
+                </div>
+                <div>👤 {patientName}</div>
+                <div style={{ opacity: 0.85 }}>
+                  📍 {address}
+                </div>
+              </div>
+            );
+          }}
 
           /* MULTI REUNIONES */
           eventOverlap
@@ -160,7 +286,6 @@ export const ScheduledVisits = () => {
           allDaySlot={false}
           slotMinTime="06:00:00"
           slotMaxTime="22:00:00"
-          slotDuration="00:30:00"
 
           /* FORMATOS */
           dayMaxEventRows={isMobile ? 3 : false}
@@ -190,15 +315,27 @@ export const ScheduledVisits = () => {
               }
           }
 
+          /* ➕ CREAR */
           select={(info) => {
+            if (role !== "admin") return;
             setSelectedRange(info);
             setSelectedEvent(null);
             setModalOpen(true);
           }}
 
+          /* 👆 CLICK EN EVENTO */
           eventClick={(info) => {
-            setSelectedEvent(info.event);
-            setModalOpen(true);
+            const assignedUserId = info.event.extendedProps?.assignedUserId;
+
+            if (role === "admin") {
+              setSelectedEvent(info.event);
+              setModalOpen(true);
+            } else {
+              if (assignedUserId === currentUser?.uid) {
+                setSelectedEvent(info.event);
+                setIecOpen(true);
+              }
+            }
           }}
         />
       </Box>

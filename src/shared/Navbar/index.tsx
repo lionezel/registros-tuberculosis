@@ -13,25 +13,20 @@ import {
   Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import HomeIcon from "@mui/icons-material/Home";
-import FolderIcon from "@mui/icons-material/Folder";
-import AssessmentIcon from "@mui/icons-material/Assessment";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import LogoutIcon from "@mui/icons-material/Logout";
 import ChecklistIcon from "@mui/icons-material/Checklist";
-import PersonOffIcon from "@mui/icons-material/PersonOff";
-import WarningIcon from "@mui/icons-material/Warning";
-import Diversity3Icon from "@mui/icons-material/Diversity3";
-import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hook/useAuth";
 import Logo from "../../assets/logo/download.png";
 import { auth } from "../../firebase/cofing";
 import { signOut } from "firebase/auth";
 
 export const Navbar = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
   const toggleDrawer = (value: boolean) => {
@@ -48,12 +43,18 @@ export const Navbar = () => {
     }
   };
 
-  const menuItems = [
+  const mainMenu = [
     {
-      text: "",
+      label: "Todos los Casos",
       path: "/",
-      icon: <FolderIcon />,
+      icon: <ChecklistIcon />,
     },
+    {
+      label: "Visitas agendadas",
+      path: "/ScheduledVisits",
+      icon: <CalendarMonthIcon />,
+    },
+
   ];
 
   return (
@@ -120,72 +121,31 @@ export const Navbar = () => {
 
           {/* MENÚ */}
           <List>
-            <ListItemButton onClick={() => navigate("/")}>
-              <ListItemIcon>
-                <ChecklistIcon />
-              </ListItemIcon>
-              <ListItemText primary="Casos cerrados" />
-            </ListItemButton>
+            {mainMenu.map((item) => {
+              const isActive = location.pathname === item.path;
 
-            <ListItemButton onClick={() => navigate("/registros")}>
-              <ListItemIcon>
-                <PersonOffIcon />
-              </ListItemIcon>
-              <ListItemText primary="Casos fallecidos" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/reportes")}>
-              <ListItemIcon>
-                <WarningIcon />
-              </ListItemIcon>
-              <ListItemText primary="Paciente en riesgo de perdida en el seguimiento" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/reportes")}>
-              <ListItemIcon>
-                <Diversity3Icon />
-              </ListItemIcon>
-              <ListItemText primary="Contacto Sintomatico" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/reportes")}>
-              <ListItemIcon>
-                <SignalCellularAltIcon />
-              </ListItemIcon>
-              <ListItemText primary="Estadisticas" />
-            </ListItemButton>
+              return (
+                <ListItemButton
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  selected={isActive}
+                  sx={{
+                    bgcolor: isActive ? "rgba(25, 118, 210, 0.08)" : "transparent",
+                    "& .MuiListItemIcon-root": {
+                      color: isActive ? "primary.main" : "inherit",
+                    },
+                    "& .MuiListItemText-primary": {
+                      fontWeight: isActive ? 600 : 400,
+                    },
+                  }}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              );
+            })}
           </List>
 
-          <Divider />
-          <List>
-            <ListItemButton onClick={() => navigate("/")}>
-              <ListItemIcon>
-                <ChecklistIcon />
-              </ListItemIcon>
-              <ListItemText primary="Eventos" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/ScheduledVisits")}>
-              <ListItemIcon>
-                <PersonOffIcon />
-              </ListItemIcon>
-              <ListItemText primary="Visitas agendadas" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/reportes")}>
-              <ListItemIcon>
-                <WarningIcon />
-              </ListItemIcon>
-              <ListItemText primary="Casos en espera" />
-            </ListItemButton>
-
-            <ListItemButton onClick={() => navigate("/reportes")}>
-              <ListItemIcon>
-                <Diversity3Icon />
-              </ListItemIcon>
-              <ListItemText primary="Contactos" />
-            </ListItemButton>
-          </List>
           <Divider />
 
           {/* LOGOUT */}

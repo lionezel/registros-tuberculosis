@@ -11,8 +11,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import VideocamIcon from "@mui/icons-material/Videocam";
-import SendIcon from '@mui/icons-material/Send';
+import SendIcon from "@mui/icons-material/Send";
 import { useEffect, useState } from "react";
 import { AppUser, useFetchUsers } from "../../../../hook/useFetchUsers";
 
@@ -21,9 +20,10 @@ interface Props {
   onClose: () => void;
   onSave: (data: any) => void;
   onDelete?: () => void;
-  onOpenIEC: () => void;     // 🔥 NUEVO BOTÓN IEC
+  onOpenIEC: () => void;
   initialData?: any;
-  isEdit?: boolean;
+  isEdit?: boolean;   // true = editar, false = solo ver
+  hasIEC?: boolean;
 }
 
 export const VisitModal = ({
@@ -34,8 +34,12 @@ export const VisitModal = ({
   onOpenIEC,
   initialData,
   isEdit = false,
+  hasIEC = false,
 }: Props) => {
   const { users } = useFetchUsers();
+
+  // 🔒 Modo solo lectura si NO es edición
+  const isReadOnly = !isEdit;
 
   // Datos básicos
   const [title, setTitle] = useState("");
@@ -66,6 +70,8 @@ export const VisitModal = ({
   }, [initialData]);
 
   const handleSave = () => {
+    if (isReadOnly) return;
+
     onSave({
       title,
       description,
@@ -88,7 +94,7 @@ export const VisitModal = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: 420,          // 👈 tamaño tipo Teams
+          width: 550,
           borderLeft: "1px solid #ddd",
         },
       }}
@@ -105,7 +111,7 @@ export const VisitModal = ({
         }}
       >
         <Typography fontWeight={600}>
-          {isEdit ? "Editar cita" : "Nueva cita"}
+          {isEdit ? "Editar cita" : "Detalle de la cita"}
         </Typography>
 
         <IconButton onClick={onClose} sx={{ color: "white" }}>
@@ -121,9 +127,9 @@ export const VisitModal = ({
             variant="contained"
             startIcon={<SendIcon />}
             sx={{ bgcolor: "#1976d2" }}
-            onClick={onOpenIEC}   // 🔥 ABRE FORMATO IEC
+            onClick={onOpenIEC}
           >
-            Llenar formato IEC
+            {hasIEC ? "Editar formato IEC" : "Llenar formato IEC"}
           </Button>
         </Stack>
       )}
@@ -144,6 +150,9 @@ export const VisitModal = ({
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
             required
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <TextField
@@ -152,6 +161,9 @@ export const VisitModal = ({
             fullWidth
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <TextField
@@ -160,6 +172,9 @@ export const VisitModal = ({
             fullWidth
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <Divider />
@@ -174,6 +189,7 @@ export const VisitModal = ({
             }
             value={assignedUser}
             onChange={(_, value) => setAssignedUser(value)}
+            disabled={isReadOnly}   // 🔒 bloqueado en solo lectura
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -201,6 +217,9 @@ export const VisitModal = ({
             fullWidth
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <TextField
@@ -211,6 +230,9 @@ export const VisitModal = ({
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <TextField
@@ -221,6 +243,9 @@ export const VisitModal = ({
             value={start}
             onChange={(e) => setStart(e.target.value)}
             required
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <TextField
@@ -231,12 +256,20 @@ export const VisitModal = ({
             value={end}
             onChange={(e) => setEnd(e.target.value)}
             required
+            InputProps={{
+              readOnly: isReadOnly,
+            }}
           />
 
           <Divider />
 
           {/* ACCIONES */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            {/* Eliminar solo si puede editar */}
             {isEdit && (
               <IconButton color="error" onClick={onDelete}>
                 <DeleteIcon />
@@ -244,14 +277,18 @@ export const VisitModal = ({
             )}
 
             <Stack direction="row" spacing={1}>
-              <Button onClick={onClose}>Cancelar</Button>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={!patientName || !start || !end}
-              >
-                Guardar cita
-              </Button>
+              <Button onClick={onClose}>Cerrar</Button>
+
+              {/* Guardar solo si puede editar */}
+              {isEdit && (
+                <Button
+                  variant="contained"
+                  onClick={handleSave}
+                  disabled={!patientName || !start || !end}
+                >
+                  Guardar cita
+                </Button>
+              )}
             </Stack>
           </Stack>
         </Stack>

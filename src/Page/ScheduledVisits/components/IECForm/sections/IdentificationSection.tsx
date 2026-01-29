@@ -1,4 +1,4 @@
-import { Stack, Button, MenuItem } from "@mui/material";
+import { Stack, MenuItem } from "@mui/material";
 import { Field } from "../Field";
 import { IECForm } from "../types";
 
@@ -22,19 +22,6 @@ export const IdentificationSection = ({ form, onChange, onOCR, loadingOCR }: Pro
 
 
         <Field label="Número de identificación" name="numeroId" value={form.numeroId} onChange={onChange} />
-
-
-        <Button variant="outlined" component="label" fullWidth disabled={loadingOCR}>
-            {loadingOCR ? "Leyendo cédula..." : "📸 Tomar / subir foto de la cédula"}
-            <input
-                hidden
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e: any) => e.target.files[0] && onOCR(e.target.files[0])}
-            />
-        </Button>
-
 
         <Field select label="Sexo" name="sexo" value={form.sexo} onChange={onChange}>
             <MenuItem value="M">Masculino</MenuItem>

@@ -19,8 +19,9 @@ import AppleIcon from "@mui/icons-material/Apple";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Logo from "../../../assets/logo/download.png";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../../firebase/cofing";
+import { auth, db } from "../../../firebase/cofing";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -36,12 +37,32 @@ export const Login = () => {
     prompt: "select_account",
   });
 
+  const createUserIfNotExists = async (user: any) => {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "",
+        role: "trabajador",
+        provider: user.providerData[0]?.providerId || "password",
+        createdAt: new Date(),
+      });
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setError("");
 
     try {
       setLoading(true);
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // 👉 Crear usuario en Firestore si no existe
+      await createUserIfNotExists(result.user);
+
       navigate("/");
     } catch (error) {
       setError("Error al iniciar sesión con Google");
@@ -60,7 +81,11 @@ export const Login = () => {
 
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      // 👉 Crear usuario en Firestore si no existe
+      await createUserIfNotExists(cred.user);
+
       navigate("/");
     } catch {
       setError("Usuario o contraseña incorrectos");
